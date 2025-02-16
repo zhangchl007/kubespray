@@ -1,0 +1,63 @@
+---
+- name: Install and Configure Azure CNI
+  hosts: all
+  become: yes
+  vars:
+    azure_cni_version: "v1.4.25"
+    cni_bin_dir: "/opt/cni/bin"
+    cni_conf_dir: "/etc/cni/net.d"
+    kubelet_env_file: "/var/lib/kubelet/kubeadm-flags.env"
+
+  tasks:
+    - name: Ensure required directories exist
+      file:
+        path: "{{ cni_bin_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download Azure CNI plugin
+      get_url:
+        url: "https://github.com/Azure/azure-container-networking/releases/download/{{ azure_cni_version }}/azure-vnet-cni-linux-amd64-{{ azure_cni_version }}.tgz"
+        dest: "/tmp/azure-vnet-cni.tgz"
+
+    - name: Extract Azure CNI plugin
+      unarchive:
+        src: "/tmp/azure-vnet-cni.tgz"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Move Azure CNI binaries to /opt/cni/bin/
+      command: mv /tmp/azure-vnet "{{ cni_bin_dir }}/"
+
+    - name: Configure Azure CNI (10-azure.conflist)
+      copy:
+        dest: "{{ cni_conf_dir }}/10-azure.conflist"
+        content: |
+          {
+            "cniVersion": "0.3.0",
+            "name": "azure",
+            "plugins": [
+              {
+                "type": "azure-vnet",
+                "mode": "transparent",
+                "ipsToRouteViaHost":["169.254.20.10"],
+                "logLevel": "info",
+                "ipam": {
+                  "type": "azure-vnet-ipam"
+                }
+              }
+            ]
+          }
+        mode: '0644'
+
+    - name: Update kubeadm flags for kubelet to use CNI
+      ansible.builtin.lineinfile:
+        path: "{{ kubelet_env_file }}"
+        line: 'KUBELET_KUBEADM_ARGS="--network-plugin=cni --cni-bin-dir=/opt/cni/bin --cni-conf-dir=/etc/cni/net.d"'
+        insertafter: EOF
+
+    - name: Restart kubelet to apply changes
+      systemd:
+        name: kubelet
+        state: restarted
+        enabled: yes

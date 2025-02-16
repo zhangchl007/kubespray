@@ -65,26 +65,60 @@ It will create the file ./inventory which can then be used with kubespray, e.g.:
 cd kubespray-root-dir
 ansible-playbook -i contrib/azurerm/inventory -u devops --become -e "@inventory/sample/group_vars/all/all.yml" cluster.yml
 ```
-example demo 
+## create all virtual machine and load balancer for K8S Installation
 
 ```shell
-
 az group create --name k8s-azure-rg --location australiaeast
 
 mkdir azure-k8s-deploy && cd azure-k8s-deploy
 
 git clone https://github.com/kubernetes-incubator/kubespray.git
-cd kubespray/
 
+cd kubespray/contrib/azurerm/
+
+./apply-rg.sh k8s-azure-rg
+././generate-inventory.sh k8s-azure-rg
+
+```
+## Prepare basion for ansible playbook
+
+```shell
 python3 -m pip install --upgrade pip
 pip install --user netaddr
 pip install --user jinja2
 pip install --user ansible==9.13.0
 pip install --user jmespath
 
-ansible all -i inventory -m ping --ssh-common-args="-o StrictHostKeyChecking=no"
+awk '/ip=/ {match($0, /^(\S+).*ip=([0-9.]+)/, a); if (a[1] && a[2]) print a[2], a[1]}' contrib/azurerm/inventory
 
-ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become -e "@inventory/sample/group_vars/all/all.yml" c
-luster.yml
+ansible all -i inventory -m ping -u k8sdemo --ssh-common-args="-o StrictHostKeyChecking=no"
+
+ansible all -i contrib/azurerm/inventory -u k8sdemo  -m ping
 
 ```
+
+## install k8s cluster
+
+```shell
+ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become -e "@inventory/sample/group_vars/all/all.yml" cluster.yml
+
+```
+## Uninstall Calico CNI
+
+```shell
+ ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become remove-calico.yml
+
+```
+## Install Azure CNi and Reboot VMs
+
+```shell
+ ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become install-azure-cni.yml
+
+ ansible all -i contrib/azurerm/inventory -u k8sdemo  -mshell -b -a "reboot"
+
+ ```
+
+
+
+
+

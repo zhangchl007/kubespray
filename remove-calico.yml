@@ -1,0 +1,50 @@
+- name: Remove Calico CNI Locally
+  hosts: localhost
+  remote_user: k8sdemo  # Runs tasks as 'ubuntu'
+  become: no 
+  tasks:
+    - name: Download Calico manifest
+      get_url:
+        url: https://docs.projectcalico.org/manifests/calico.yaml
+        dest: /tmp/calico.yaml
+
+    - name: Ensure correct Kubernetes context
+      command: kubectl config current-context
+      register: current_context
+
+    - name: Show current Kubernetes context
+      debug:
+        msg: "Current Kubernetes context: {{ current_context.stdout }}"
+
+    - name: Delete Calico resources from the cluster
+      command: kubectl delete -f /tmp/calico.yaml
+      register: delete_output
+      ignore_errors: yes
+
+    - name: Display deletion output
+      debug:
+        msg: "{{ delete_output.stdout }}"
+- name: Remove Calico CNI
+  hosts: all
+  become: yes
+  tasks:
+    - name: Delete Calico manifests
+      file:
+        path: /etc/cni/net.d/10-calico.conflist
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove Calico binaries
+      file:
+        path: /opt/cni/bin/calico
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove Calico directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/calico
+        - /var/lib/calico
+      ignore_errors: yes
