@@ -77,7 +77,7 @@ git clone https://github.com/kubernetes-incubator/kubespray.git
 cd kubespray/contrib/azurerm/
 
 ./apply-rg.sh k8s-azure-rg
-././generate-inventory.sh k8s-azure-rg
+./generate-inventory.sh k8s-azure-rg
 
 ```
 ## Prepare basion for ansible playbook
@@ -89,9 +89,11 @@ pip install --user jinja2
 pip install --user ansible==9.13.0
 pip install --user jmespath
 
-awk '/ip=/ {match($0, /^(\S+).*ip=([0-9.]+)/, a); if (a[1] && a[2]) print a[2], a[1]}' contrib/azurerm/inventory
+awk '/ip=/ {match($0, /^(\S+).*ip=([0-9.]+)/, a); if (a[1] && a[2]) print a[2], a[1]}' inventory
 
-ansible all -i inventory -m ping -u k8sdemo --ssh-common-args="-o StrictHostKeyChecking=no"
+cd kubespray
+
+ansible all -i contrib/azurerm/inventory -m ping -u k8sdemo --ssh-common-args="-o StrictHostKeyChecking=no"
 
 ansible all -i contrib/azurerm/inventory -u k8sdemo  -m ping
 
@@ -109,14 +111,28 @@ ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become -e "@inventory
  ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become remove-calico.yml
 
 ```
-## Install Azure CNi and Reboot VMs
+## Install Azure CNI
+
+add secondary IPs
 
 ```shell
+./apply-rg.sh k8s-azure-rg ip
  ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become install-azure-cni.yml
 
+ ```
+# reboot all nodes
+
+```shell
  ansible all -i contrib/azurerm/inventory -u k8sdemo  -mshell -b -a "reboot"
 
- ```
+```
+# Uninstall K8S Cluster
+
+```shell
+ansible-playbook -i contrib/azurerm/inventory -u k8sdemo --become reset.yml
+
+```
+
 
 
 

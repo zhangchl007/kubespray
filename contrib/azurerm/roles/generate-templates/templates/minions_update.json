@@ -1,0 +1,68 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', '{{virtualNetworkName}}')]",
+        "kubeMinionsSubnetRef": "[concat(variables('vnetID'), '/subnets/', '{{subnetMinionsName}}')]"
+    },
+    "resources": [
+	{% for i in range(number_of_k8s_masters) %}
+        {% if not use_bastion %}
+        {
+            "apiVersion": "{{apiVersion}}",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "minion-{{i}}-pubip",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+	{% endif %}
+        {
+            "apiVersion": "{{apiVersion}}",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "minion-{{i}}-nic",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', 'minion-{{i}}-pubip')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "MinionsIpConfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+			    "primary": true,
+                            {% if not use_bastion %}
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'minion-{{i}}-pubip')]"
+                            },
+                            {% endif %}
+                            "subnet": {
+                                "id": "[variables('kubeMinionsSubnetRef')]"
+                            }
+                        }
+                    }
+                    {% for j in range(1, 33) %}
+                    ,{
+                        "name": "SecondaryIpConfig-{{ j }}",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "primary": false,
+                            "subnet": {
+                                "id": "[variables('kubeMinionsSubnetRef')]"
+                            }
+                        }
+                    }
+                    {% endfor %}
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', '{{securityGroupName}}')]"
+                },
+                "enableIPForwarding": true
+            }
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

@@ -31,6 +31,7 @@
                {
                   "type":"azure-vnet",
                   "mode":"bridge",
+                  "ipsToRouteViaHost":["169.254.20.10"],
                   "bridge":"azure0",
                   "logLevel": "info",
                   "ipam":{

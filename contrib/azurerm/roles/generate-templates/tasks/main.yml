@@ -21,5 +21,7 @@
     - availability-sets.json
     - bastion.json
     - masters.json
+    - masters_update.json
     - minions.json
+    - minions_update.json
     - clear-rg.json
