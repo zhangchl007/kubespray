@@ -18,7 +18,7 @@ availabilitySetMasters: "master-avs"
 availabilitySetMinions: "minion-avs"
 
 faultDomainCount: 2
-updateDomainCount: 5
+updateDomainCount: 10
 
 bastionVmSize: Standard_A0
 bastionVMName: bastion
@@ -28,12 +28,22 @@ disablePasswordAuthentication: true
 
 sshKeyPath: "/home/{{ admin_username }}/.ssh/authorized_keys"
 
-imageReference:
-  publisher: "resf"
-  offer: "rockylinux-x86_64"
-  sku: "9-base"
-  version: "9.3.20231113"
-imageReferenceJson: "{{ imageReference | to_json }}"
+#imageReference:
+#  publisher: "resf"
+#  offer: "rockylinux-x86_64"
+#  sku: "9-base"
+#  version: "9.3.20231113"
+#imageReferenceJson: "{{ imageReference | to_json }}"
+usePrivateImage: true
+#privateImageId: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Compute/images/{{ private_image_name }}"
+privateImageId: "/subscriptions/bba32ad2-4ac4-4bc3-8c34-ad8b2475d857/resourceGroups/rg-aks-spark/providers/Microsoft.Compute/images/Rocky9base-image-20250220225021"
+# Modify imageReferenceJson to use the private image when flag is true
+imageReferenceJson: >-
+  {% if usePrivateImage %}
+  {"id": "{{ privateImageId }}"}
+  {% else %}
+  {{ imageReference | to_json }}
+  {% endif %}
 
 storageAccountName: "sa{{ nameSuffix | replace('-', '') }}"
 storageAccountType: "{{ azure_storage_account_type | default('Standard_LRS') }}"

@@ -1,7 +1,7 @@
 
 # Due to some Azure limitations (ex:- Storage Account's name must be unique),
 # this name must be globally unique - it will be used as a prefix for azure components
-cluster_name: k8s-demo008
+cluster_name: k8s-db01
 
 # Set this to true if you do not want to have public IPs for your masters and minions. This will provision a bastion
 # node that can be used to access the masters and minions
@@ -31,10 +31,10 @@ ssh_public_keys:
 disablePasswordAuthentication: true
 
 # Azure CIDRs
-azure_vnet_cidr: 10.4.0.0/16
-azure_admin_cidr: 10.4.0.0/18
-azure_masters_cidr: 10.4.64.0/18
-azure_minions_cidr: 10.4.128.0/18
+azure_vnet_cidr: 10.5.0.0/16
+azure_admin_cidr: 10.5.0.0/20
+azure_masters_cidr: 10.5.16.0/20
+azure_minions_cidr: 10.5.64.0/18
 
 # Azure loadbalancer port to use to access your cluster
 kube_apiserver_port: 6443
