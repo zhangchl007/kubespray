@@ -60,7 +60,6 @@ rules:
       - get
       - list
       - watch
-{% if cilium_enable_hubble_ui %}
 ---
 # Source: cilium/templates/hubble-ui-clusterrole.yaml
 kind: ClusterRole
@@ -105,4 +104,3 @@ rules:
       - get
       - list
       - watch
-{% endif %}

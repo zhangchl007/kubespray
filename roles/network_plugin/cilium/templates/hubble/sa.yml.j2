@@ -14,7 +14,6 @@ kind: ServiceAccount
 metadata:
   name: hubble-relay
   namespace: kube-system
-{% if cilium_enable_hubble_ui %}
 ---
 # Source: cilium/templates/hubble-ui-serviceaccount.yaml
 apiVersion: v1
@@ -22,4 +21,3 @@ kind: ServiceAccount
 metadata:
   name: hubble-ui
   namespace: kube-system
-{% endif %}

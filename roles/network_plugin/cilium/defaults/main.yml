@@ -4,8 +4,8 @@ cilium_min_version_required: "1.10"
 cilium_debug: false
 
 cilium_mtu: ""
-cilium_enable_ipv4: "{{ ipv4_stack }}"
-cilium_enable_ipv6: "{{ ipv6_stack }}"
+cilium_enable_ipv4: true
+cilium_enable_ipv6: false
 
 # Enable l2 announcement from cilium to replace Metallb Ref: https://docs.cilium.io/en/v1.14/network/l2-announcements/
 cilium_l2announcements: false
@@ -45,9 +45,6 @@ cilium_tunnel_mode: vxlan
 
 # LoadBalancer Mode (snat/dsr/hybrid) Ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#dsr-mode
 cilium_loadbalancer_mode: snat
-
-# -- Configure Loadbalancer IP Pools
-cilium_loadbalancer_ip_pools: []
 
 # Optional features
 cilium_enable_prometheus: false
@@ -147,8 +144,6 @@ cilium_ip_masq_resync_interval: 60s
 # Hubble
 ### Enable Hubble without install
 cilium_enable_hubble: false
-### Enable Hubble-ui
-cilium_enable_hubble_ui: "{{ cilium_enable_hubble }}"
 ### Enable Hubble Metrics
 cilium_enable_hubble_metrics: false
 ### if cilium_enable_hubble_metrics: true
@@ -280,25 +275,6 @@ cilium_monitor_aggregation_flags: "all"
 
 cilium_enable_bpf_clock_probe: true
 
-# -- Enable BGP Control Plane
-cilium_enable_bgp_control_plane: false
-
-
-# -- Configure BGP Instances (New bgpv2 API v1.16+)
-cilium_bgp_cluster_configs: []
-
-# -- Configure BGP Peers (New bgpv2 API v1.16+)
-cilium_bgp_peer_configs: []
-
-# -- Configure BGP Advertisements (New bgpv2 API v1.16+)
-cilium_bgp_advertisements: []
-
-# -- Configure BGP Node Config Overrides (New bgpv2 API v1.16+)
-cilium_bgp_node_config_overrides: []
-
-# -- Configure BGP Peers (Legacy < v1.16)
-cilium_bgp_peering_policies: []
-
 # -- Whether to enable CNP status updates.
 cilium_disable_cnp_status_updates: true
 
@@ -346,5 +322,3 @@ cilium_certgen_args:
 #       resourceNames:
 #       - toto
 cilium_clusterrole_rules_operator_extra_vars: []
-cilium_enable_host_firewall: false
-cilium_policy_audit_mode: false

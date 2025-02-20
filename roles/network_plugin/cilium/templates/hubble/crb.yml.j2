@@ -28,7 +28,6 @@ subjects:
 - kind: ServiceAccount
   namespace: kube-system
   name: hubble-relay
-{% if cilium_enable_hubble_ui %}
 ---
 # Source: cilium/templates/hubble-ui-clusterrolebinding.yaml
 kind: ClusterRoleBinding
@@ -43,4 +42,3 @@ subjects:
 - kind: ServiceAccount
   namespace: kube-system
   name: hubble-ui
-{% endif %}
