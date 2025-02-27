@@ -1,0 +1,66 @@
+- name: Install cri-tools (crictl) on Rocky Linux
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Check if crictl is already installed
+      command: crictl --version
+      register: crictl_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install cri-tools from YUM repository
+      block:
+        - name: Install EPEL repository
+          dnf:
+            name: epel-release
+            state: present
+
+        - name: Add Kubernetes repository
+          copy:
+            dest: /etc/yum.repos.d/kubernetes.repo
+            content: |
+              [kubernetes]
+              name=Kubernetes
+              baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+              enabled=1
+              gpgcheck=1
+              gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+          notify: Refresh YUM cache
+
+        - name: Install cri-tools using dnf
+          dnf:
+            name: cri-tools
+            state: present
+      when: crictl_check.rc != 0
+
+    - name: Install cri-tools manually if YUM installation fails
+      block:
+        - name: Download crictl binary
+          get_url:
+            url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.28.0/crictl-v1.28.0-linux-amd64.tar.gz"
+            dest: "/tmp/crictl.tar.gz"
+
+        - name: Extract crictl binary
+          unarchive:
+            src: "/tmp/crictl.tar.gz"
+            dest: "/usr/local/bin"
+            remote_src: yes
+
+        - name: Remove downloaded archive
+          file:
+            path: "/tmp/crictl.tar.gz"
+            state: absent
+      when: crictl_check.rc != 0
+
+    - name: Configure crictl to use containerd
+      copy:
+        dest: /etc/crictl.yaml
+        content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+      when: crictl_check.rc != 0
+
+  handlers:
+    - name: Refresh YUM cache
+      command: dnf makecache
+      changed_when: false

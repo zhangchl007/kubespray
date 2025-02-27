@@ -1,0 +1,76 @@
+- name: Deploy ipprefixvmsync as a systemd service
+  hosts: all
+  become: yes  # Run tasks as root
+
+  tasks:
+    - name: Copy ipprefixvmsync binary to /usr/local/bin
+      copy:
+        src: ./azure-cni/ipprefixvmsync
+        dest: /usr/local/bin/ipprefixvmsync
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Ensure ipprefixvmsync is executable
+      file:
+        path: /usr/local/bin/ipprefixvmsync
+        mode: '0755'
+        state: file
+
+    - name: Set file capabilities for read/write permissions
+      command: setcap cap_dac_override,cap_dac_read_search+ep /usr/local/bin/ipprefixvmsync
+      become: yes  # Run as root
+
+    - name: Verify capabilities applied
+      command: getcap /usr/local/bin/ipprefixvmsync
+      register: cap_output
+
+    - name: Debug output
+      debug:
+        msg: "{{ cap_output.stdout }}"
+
+    - name: Create systemd service file for ipprefixvmsync
+      copy:
+        dest: /etc/systemd/system/ipprefixvmsync.service
+        content: |
+          [Unit]
+          Description=IP Prefix VM Sync Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/ipprefixvmsync
+          Restart=always
+          RestartSec=5
+          LimitNOFILE=65536
+          StandardOutput=journal
+          StandardError=journal
+          User=root
+          Group=root
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable ipprefixvmsync service
+      systemd:
+        name: ipprefixvmsync
+        enabled: yes
+
+    - name: Start ipprefixvmsync service
+      systemd:
+        name: ipprefixvmsync
+        state: started
+
+    - name: Check ipprefixvmsync service status
+      command: systemctl status ipprefixvmsync
+      register: service_status
+      ignore_errors: yes
+
+    - name: Debug service status
+      debug:
+        msg: "{{ service_status.stdout }}"

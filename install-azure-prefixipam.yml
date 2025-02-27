@@ -1,0 +1,86 @@
+---
+- name: Install and Configure Azure CNI
+  hosts: all
+  become: yes
+  vars:
+    azure_cni_version: "v1.5.42"
+    kubelet_env_file: "/var/lib/kubelet/kubeadm-flags.env"
+    install_script: "/tmp/install-cni-plugin.sh"
+    cni_bin_dir: "/opt/cni/bin"
+    cni_conf_dir: "/etc/cni/net.d"
+
+  tasks:
+    - name: Ensure required directories exist
+      file:
+        path: "{{ cni_bin_dir }}"
+        state: directory
+        mode: '0755'
+    - name: Copy ipprefix CNI files to remote host
+      copy:
+        src: ./azure-cni/
+        dest: "{{ cni_bin_dir }}"
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Download the Azure CNI install script to remote host
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/Azure/azure-container-networking/refs/heads/master/scripts/install-cni-plugin.sh"
+        dest: "{{ install_script }}"
+        mode: "0755"
+
+    - name: Execute the Azure CNI install script with version {{ azure_cni_version }}
+      ansible.builtin.command: "{{ install_script }} {{ azure_cni_version }}"
+      args:
+        chdir: "/tmp"
+
+    - name: Configure Azure CNI (10-azure.conflist)
+      copy:
+        dest: "{{ cni_conf_dir }}/10-azure.conflist"
+        content: |
+          {
+            "cniVersion": "0.3.1",
+            "name": "azure",
+            "plugins": [
+              {
+                "type": "cni-prefixipam",
+                "mode": "transparent",
+                "ipsToRouteViaHost":["169.254.20.10"],
+                "logLevel": "info",
+                "ipam": {
+                   "type": "cni-prefixipam"
+                }
+              },
+              {
+             "type":"portmap",
+             "capabilities":{
+                "portMappings":true
+             },
+             "snat":true
+            }
+            ]
+          }
+        mode: '0644'
+    - name: Configure ipprefix CNI
+      copy:
+        dest: "{{ cni_conf_dir }}/10-cni-prefixipam.conf"
+        content: |
+          {
+            "cniVersion": "0.3.1",
+            "name": "azure",
+            "plugins": [
+               {
+                 "type": "cni-prefixipam",
+                 "ranges": [
+                     [{"subnet": "10.5.64.112/28"}]
+                 ]
+              }
+             ]
+          }
+
+        mode: '0644'
+    - name: Restart kubelet to apply changes
+      systemd:
+        name: kubelet
+        state: restarted
+        enabled: yes

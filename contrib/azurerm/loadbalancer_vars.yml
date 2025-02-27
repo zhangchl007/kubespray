@@ -1,0 +1,8 @@
+## External LB example config
+apiserver_loadbalancer_domain_name: k8s-db01-api.australiaeast.cloudapp.azure.com
+loadbalancer_apiserver:
+  address: 52.147.24.184
+  port: 6443
+
+## Internal loadbalancers for apiservers
+loadbalancer_apiserver_localhost: false

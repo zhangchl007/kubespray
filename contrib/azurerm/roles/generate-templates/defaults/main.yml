@@ -1,0 +1,49 @@
+---
+apiVersion: "2018-10-01"
+saapiVersion: "2018-11-01"
+
+
+virtualNetworkName: "{{ azure_virtual_network_name | default('KubeVNET') }}"
+
+subnetAdminName: "{{ azure_subnet_admin_name | default('ad-subnet') }}"
+subnetMastersName: "{{ azure_subnet_masters_name | default('master-subnet') }}"
+subnetMinionsName: "{{ azure_subnet_minions_name | default('minion-subnet') }}"
+
+routeTableName: "{{ azure_route_table_name | default('routetable') }}"
+securityGroupName: "{{ azure_security_group_name | default('secgroup') }}"
+
+nameSuffix: "{{ cluster_name }}"
+
+availabilitySetMasters: "master-avs"
+availabilitySetMinions: "minion-avs"
+
+faultDomainCount: 2
+updateDomainCount: 10
+
+bastionVmSize: Standard_A0
+bastionVMName: bastion
+bastionIPAddressName: bastion-pubip
+
+disablePasswordAuthentication: true
+
+sshKeyPath: "/home/{{ admin_username }}/.ssh/authorized_keys"
+
+#imageReference:
+#  publisher: "resf"
+#  offer: "rockylinux-x86_64"
+#  sku: "9-base"
+#  version: "9.3.20231113"
+#imageReferenceJson: "{{ imageReference | to_json }}"
+usePrivateImage: true
+#privateImageId: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Compute/images/{{ private_image_name }}"
+privateImageId: "/subscriptions/ffa067fd-36c1-4774-a161-7ebdac9a934f/resourceGroups/k8s-azure-rg/providers/Microsoft.Compute/images/rocky9.3-image-20250227100308"
+# Modify imageReferenceJson to use the private image when flag is true
+imageReferenceJson: >-
+  {% if usePrivateImage %}
+  {"id": "{{ privateImageId }}"}
+  {% else %}
+  {{ imageReference | to_json }}
+  {% endif %}
+
+storageAccountName: "sa{{ nameSuffix | replace('-', '') }}"
+storageAccountType: "{{ azure_storage_account_type | default('Standard_LRS') }}"

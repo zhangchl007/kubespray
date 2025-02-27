@@ -1,0 +1,68 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', '{{virtualNetworkName}}')]",
+        "kubeMastersSubnetRef": "[concat(variables('vnetID'),'/subnets/', '{{subnetMastersName}}')]"
+    },
+    "resources": [
+	{% for i in range(number_of_k8s_masters) %}
+        {% if not use_bastion %}
+        {
+            "apiVersion": "{{apiVersion}}",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "master-{{i}}-pubip",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+	{% endif %}
+        {
+            "apiVersion": "{{apiVersion}}",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "master-{{i}}-nic",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', 'master-{{i}}-pubip')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "MastersIpConfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+			    "primary": true,
+                            {% if not use_bastion %}
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'master-{{i}}-pubip')]"
+                            },
+                            {% endif %}
+                            "subnet": {
+                                "id": "[variables('kubeMastersSubnetRef')]"
+                            }
+                        }
+                    }
+                    {% for j in range(1, 2) %}
+                    ,{
+                        "name": "SecondaryIpConfig-{{j}}",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "primary": false,
+                            "subnet": {
+                                "id": "[variables('kubeMastersSubnetRef')]"
+                            }
+                        }
+                    }
+                    {% endfor %}
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', '{{securityGroupName}}')]"
+                },
+                "enableIPForwarding": true
+            }
+        }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ]
+}

@@ -1,0 +1,51 @@
+
+# Due to some Azure limitations (ex:- Storage Account's name must be unique),
+# this name must be globally unique - it will be used as a prefix for azure components
+cluster_name: k8s-db01
+
+# Set this to true if you do not want to have public IPs for your masters and minions. This will provision a bastion
+# node that can be used to access the masters and minions
+use_bastion: false
+
+# Set this to a preferred name that will be used as the first part of the dns name for your bastotion host. For example: k8s-bastion.<azureregion>.cloudapp.azure.com.
+# This is convenient when exceptions have to be configured on a firewall to allow ssh to the given bastion host.
+# bastion_domain_prefix: k8s-bastion
+
+number_of_k8s_masters: 3
+number_of_k8s_nodes: 3
+
+masters_vm_size: Standard_D4as_v5
+masters_os_disk_size: 1000
+
+minions_vm_size: Standard_D4as_v5
+minions_os_disk_size: 1000
+
+admin_username: k8sdemo
+admin_password: Thisk8s5369
+
+# MAKE SURE TO CHANGE THIS TO YOUR PUBLIC KEY to access your azure machines
+ssh_public_keys:
+ - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCyQWrKny4IgrbbC/aYFxKPwAGCz+bhgpvUISsCQo2Jmf9p9BChsXUs1nnkJNETdNHPYIkLZZC9m0cmwfd8CGna69B1X2hEFTBgFmWNP+sy7w25wRNatpIiPwzRBFHF9qHTQEPSRBMQyc/I/Da2wEc8BK4xvdZVrk7JjB9NOyyQerp/IoW7vMAwEeQWFoJzrai1MriMlA2OMjIzXTKbYBJTnfxGNY7DPup3eIUyG/vIKtty4SxpbuW8KdwwH7FAHBwqlrVmAwZzS/Jsn0M4kXIcGAdR/CLgiTPXA/mGtLOM8nesd49WB96lISo84rOrVcmGdhjTJsZpLkCfNM+udrvlvtkXlt1TF0xpVgitsJgAGMuNYrM4SKgnO1yqgaKpT828j/Anx8SVyAOPNwhmv3kca+CvRmECrph6mJHl8s9HcL39BDQHnPwNZvWDfI9Oj1+9SYrrGz1BxQthugoJchCkP3bLwVBnhzjGZRbkiTMOUPX3XsAk4okZVt7dMXFyB8= azureuser@mytest01"
+
+# Disable using ssh using password. Change it to false to allow to connect to ssh by password
+disablePasswordAuthentication: true
+
+# Azure CIDRs
+azure_vnet_cidr: 10.5.0.0/16
+azure_admin_cidr: 10.5.0.0/20
+azure_masters_cidr: 10.5.16.0/20
+azure_minions_cidr: 10.5.64.0/18
+
+# Azure loadbalancer port to use to access your cluster
+kube_apiserver_port: 6443
+
+# Azure Netwoking and storage naming to use with inventory/all.yml
+#azure_virtual_network_name: KubeVNET
+#azure_subnet_admin_name: ad-subnet
+#azure_subnet_masters_name: master-subnet
+#azure_subnet_minions_name: minion-subnet
+#azure_route_table_name: routetable
+#azure_security_group_name: secgroup
+
+# Storage types available are: "Standard_LRS","Premium_LRS"
+#azure_storage_account_type: Standard_LRS
