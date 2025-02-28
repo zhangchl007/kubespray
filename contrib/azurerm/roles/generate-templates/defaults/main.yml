@@ -36,7 +36,7 @@ sshKeyPath: "/home/{{ admin_username }}/.ssh/authorized_keys"
 #imageReferenceJson: "{{ imageReference | to_json }}"
 usePrivateImage: true
 #privateImageId: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Compute/images/{{ private_image_name }}"
-privateImageId: "/subscriptions/ffa067fd-36c1-4774-a161-7ebdac9a934f/resourceGroups/k8s-azure-rg/providers/Microsoft.Compute/images/rocky9.3-image-20250227100308"
+privateImageId: "/subscriptions/ffa067fd-36c1-4774-a161-7ebdac9a934f/resourcegroups/aksLinuxGalleryRG/providers/Microsoft.Compute/images/rocky9.3-image-20250227181901"
 # Modify imageReferenceJson to use the private image when flag is true
 imageReferenceJson: >-
   {% if usePrivateImage %}
