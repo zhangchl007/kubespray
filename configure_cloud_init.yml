@@ -1,0 +1,27 @@
+---
+- name: Configure cloud-init network settings
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Ensure the cloud-init directory exists
+      file:
+        path: /etc/cloud/cloud.cfg.d
+        state: directory
+        mode: '0755'
+
+    - name: Create cloud-init network configuration file
+      copy:
+        dest: /etc/cloud/cloud.cfg.d/06_net.cfg
+        content: |
+          datasource:
+            Azure:
+              apply_network_config: true
+              apply_network_config_for_secondary_ips: false
+              data_dir: /var/lib/waagent
+        mode: '0644'
+
+    - name: Clean cloud-init logs
+      command: cloud-init clean --logs --reboot
+      become: true
+
